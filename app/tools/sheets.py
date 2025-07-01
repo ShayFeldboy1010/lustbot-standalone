@@ -40,13 +40,50 @@ class GoogleSheetsClient:
             if google_creds_json and google_creds_json.strip():
                 logger.info("Using credentials from environment variable")
                 try:
-                    creds_dict = json.loads(google_creds_json)
+                    # Clean the JSON string - remove any potential BOM or extra whitespace
+                    cleaned_json = google_creds_json.strip()
+                    
+                    # Remove BOM if present
+                    if cleaned_json.startswith('\ufeff'):
+                        cleaned_json = cleaned_json[1:]
+                    
+                    # Check if the JSON has the environment variable name as prefix
+                    if cleaned_json.startswith('GOOGLE_APPLICATION_CREDENTIALS_JSON'):
+                        # Find the first '{' and extract from there
+                        start_idx = cleaned_json.find('{')
+                        if start_idx > 0:
+                            cleaned_json = cleaned_json[start_idx:]
+                            logger.warning("Removed environment variable name prefix from JSON")
+                    
+                    # Log debug info
+                    logger.info(f"Cleaned JSON length: {len(cleaned_json)}")
+                    logger.info(f"First 50 chars: {repr(cleaned_json[:50])}")
+                    logger.info(f"Last 50 chars: {repr(cleaned_json[-50:])}")
+                    
+                    creds_dict = json.loads(cleaned_json)
                     creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
                     logger.info("Successfully created credentials from JSON")
                 except json.JSONDecodeError as e:
                     logger.error(f"Failed to parse JSON credentials: {e}")
-                    logger.error(f"JSON content preview: {google_creds_json[:200]}...")
-                    raise
+                    logger.error(f"Error at position: {e.pos if hasattr(e, 'pos') else 'N/A'}")
+                    logger.error(f"JSON content around error: {repr(google_creds_json[max(0, e.pos-20):e.pos+20]) if hasattr(e, 'pos') and e.pos else 'N/A'}")
+                    
+                    # Try to clean and retry once
+                    logger.warning("Attempting to clean JSON and retry...")
+                    try:
+                        # More aggressive cleaning
+                        import re
+                        cleaned_json = re.sub(r'[^\x20-\x7E\n\r\t]', '', google_creds_json)  # Remove non-printable chars
+                        cleaned_json = cleaned_json.strip()
+                        
+                        creds_dict = json.loads(cleaned_json)
+                        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+                        logger.info("Successfully created credentials from cleaned JSON")
+                    except Exception as retry_error:
+                        logger.error(f"Failed to parse cleaned JSON: {retry_error}")
+                        logger.warning("Falling back to file-based credentials")
+                        # Fall through to file-based credentials
+                        google_creds_json = None
             else:
                 # Fallback to file-based credentials (for local development)
                 logger.warning(f"No JSON credentials found in environment, falling back to file")
