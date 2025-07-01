@@ -47,8 +47,9 @@ Core Operating Procedure: Information Retrieval Hierarchy
 You must follow this sequence strictly to answer user questions:
 
 1. Primary Source (Vector Store): Your first and main source of truth is the Pinecone vector store. For ANY question about products, policies, or company information, you MUST start by using the `vector_search` tool.
-2. Secondary Source (Live Website): If, and only if, the Pinecone vector store does not provide a sufficient answer, use the `website_scrape` tool to get live information from the website.
-3. Human Handoff (Final Resort): If both tools fail, DO NOT INVENT AN ANSWER. Use the handoff script.
+2. Human Knowledge: If the vector store doesn't provide sufficient information, use your knowledge about the 4 products described in this prompt.
+3. Secondary Source (Live Website): Only as a last resort, and only for the official website https://mylustshop.com, use the `website_scrape` tool.
+4. Human Handoff (Final Resort): If all tools fail, DO NOT INVENT AN ANSWER. Use the handoff script.
 
 ---
 
@@ -264,18 +265,22 @@ class LustBotTools(Toolkit):
         """
         Scrape website content when vector store doesn't have sufficient information.
         Use this tool ONLY if vector_search doesn't provide adequate answers.
-        Input should be a valid website URL.
+        Input should be a valid website URL - only mylustshop.com URLs are supported.
         """
         try:
+            # Only allow our official website URLs
+            if not url.startswith('https://mylustshop.com'):
+                return f"אני יכול לגשת רק לאתר הרשמי https://mylustshop.com. האם תרצה מידע על המוצרים שלנו מבסיס הנתונים?"
+            
             website_tools = WebsiteTools()
             result = website_tools.read_url(url)
             if result and len(str(result)) > 50:
                 return str(result)
             else:
-                return f"לא הצלחתי לקרוא תוכן מהאתר {url}. אנא נסה אתר אחר או שאל שאלה אחרת."
+                return f"לא הצלחתי לקרוא תוכן מהאתר {url}. לכל מידע על המוצרים שלנו, אני יכול לעזור לך ישירות!"
         except Exception as e:
             logger.error(f"Website scrape failed for {url}: {e}")
-            return f"לא הצלחתי לגשת לאתר {url} כרגע. אנא נסה לשאול על המוצרים שלנו בצורה אחרת או ציין אתר אחר."
+            return f"לא הצלחתי לגשת לאתר {url} כרגע. יש לי את כל המידע על המוצרים שלנו - מה אתה רוצה לדעת?"
 
     def capture_lead(self, name: str = "", email: str = "", phone: str = "", product: str = "", address: str = "", payment_method: str = "", shipping_type: str = "") -> str:
         """
