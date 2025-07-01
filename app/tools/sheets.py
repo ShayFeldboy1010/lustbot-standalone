@@ -71,7 +71,8 @@ class GoogleSheetsClient:
                        os.getenv('GOOGLE_SHEET_ID'))
             
             if not sheet_id:
-                raise ValueError("No Google Sheets ID configured")
+                logger.warning("No Google Sheets ID configured - running without Google Sheets support")
+                return
                 
             logger.info(f"Attempting to open sheet with ID: {sheet_id}")
             

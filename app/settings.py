@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     # Google Services
     google_sheets_api_key: Optional[str] = Field(None, env="GOOGLE_SHEETS_API_KEY")
     google_sheets_credentials_path: str = Field("creds/sheets.json", env="GOOGLE_APPLICATION_CREDENTIALS")
-    google_sheets_id: str = Field(..., env="GOOGLE_SHEETS_SPREADSHEET_ID")
+    google_sheets_id: Optional[str] = Field(None, env="GOOGLE_SHEETS_SPREADSHEET_ID")
     sheet_id: Optional[str] = Field(None, env="GOOGLE_SHEET_ID")  # Legacy support
     
     # Agent Settings
