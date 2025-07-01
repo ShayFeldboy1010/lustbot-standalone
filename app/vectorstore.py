@@ -92,12 +92,16 @@ class LustVectorStore:
     def load_products_from_csv(self, csv_path: str = "data/lust_products.csv") -> bool:
         """Load products from CSV file into vector store"""
         try:
+            logger.info(f"Starting to load products from: {csv_path}")
+            
             if not os.path.exists(csv_path):
                 logger.warning(f"CSV file not found: {csv_path}")
                 return False
             
             if not self.index:
-                logger.error("Pinecone index not available")
+                logger.error("Pinecone index not available - initialization failed")
+                logger.error(f"Pinecone client exists: {self.pinecone_client is not None}")
+                logger.error(f"Expected index name: {self.index_name}")
                 return False
             
             # Read CSV
