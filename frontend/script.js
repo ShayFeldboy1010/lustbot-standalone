@@ -164,8 +164,8 @@ class LustBot {
         const urlRegex = /(https?:\/\/[^\s]+)/g;
         text = text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener">$1</a>');
         
-        // Remove newlines - let text flow naturally
-        text = text.replace(/\n/g, ' ');
+        // Convert line breaks to HTML breaks for proper display
+        text = text.replace(/\n/g, '<br>');
         
         // Look for product information patterns and format them
         // This is a simple example - you can enhance this based on your product response format

@@ -193,9 +193,9 @@ body {
     border: 1px solid var(--border);
     font-size: 15px;
     font-weight: 400;
-    line-height: 1.5;
+    line-height: 1.6;
     word-wrap: break-word;
-    white-space: normal; /* Don't preserve newlines - let text flow normally */
+    white-space: normal; /* Allow HTML breaks to work */
     direction: rtl; /* RTL for Hebrew text */
     text-align: right; /* Right-align text */
     font-family: 'Inter', 'Poppins', 'Heebo', sans-serif;
