@@ -44,24 +44,45 @@ class LustVectorStore:
             self.pinecone_client = Pinecone(api_key=settings.pinecone_api_key)
             
             # Check if index exists, if not create it
-            existing_indexes = [index.name for index in self.pinecone_client.list_indexes()]
-            logger.info(f"Existing Pinecone indexes: {existing_indexes}")
+            try:
+                existing_indexes = [index.name for index in self.pinecone_client.list_indexes()]
+                logger.info(f"Existing Pinecone indexes: {existing_indexes}")
+            except Exception as list_error:
+                logger.error(f"Failed to list Pinecone indexes: {list_error}")
+                return
             
             if self.index_name not in existing_indexes:
                 logger.info(f"Creating new Pinecone index: {self.index_name}")
-                self.pinecone_client.create_index(
-                    name=self.index_name,
-                    dimension=1536,  # OpenAI text-embedding-3-small dimension
-                    metric="cosine",
-                    spec=ServerlessSpec(
-                        cloud="aws",
-                        region="us-east-1"
+                try:
+                    self.pinecone_client.create_index(
+                        name=self.index_name,
+                        dimension=1536,  # OpenAI text-embedding-3-small dimension
+                        metric="cosine",
+                        spec=ServerlessSpec(
+                            cloud="aws",
+                            region="us-east-1"
+                        )
                     )
-                )
-                logger.info(f"Successfully created Pinecone index: {self.index_name}")
+                    logger.info(f"Successfully created Pinecone index: {self.index_name}")
+                    
+                    # Wait for index to be ready
+                    import time
+                    logger.info("Waiting for index to be ready...")
+                    time.sleep(10)  # Wait 10 seconds for index to initialize
+                    
+                except Exception as create_error:
+                    logger.error(f"Failed to create Pinecone index: {create_error}")
+                    return
             
-            self.index = self.pinecone_client.Index(self.index_name)
-            logger.info(f"Connected to Pinecone index: {self.index_name}")
+            try:
+                self.index = self.pinecone_client.Index(self.index_name)
+                # Test the index connection
+                stats = self.index.describe_index_stats()
+                logger.info(f"Connected to Pinecone index: {self.index_name} - Stats: {stats}")
+            except Exception as connect_error:
+                logger.error(f"Failed to connect to Pinecone index {self.index_name}: {connect_error}")
+                self.index = None
+                return
             
         except Exception as e:
             logger.error(f"Failed to initialize Pinecone: {e}")
