@@ -34,6 +34,7 @@ class LustVectorStore:
     
     def _initialize_pinecone(self):
         """Initialize Pinecone connection"""
+        logger.info("🔧 Starting Pinecone initialization...")
         try:
             # Check if API key is available
             if not settings.pinecone_api_key:
@@ -86,7 +87,10 @@ class LustVectorStore:
             
         except Exception as e:
             logger.error(f"Failed to initialize Pinecone: {e}")
+            logger.error(f"Exception type: {type(e).__name__}")
+            logger.error(f"Exception details: {str(e)}")
             logger.error(f"Pinecone API key present: {bool(settings.pinecone_api_key)}")
+            logger.error(f"Pinecone API key length: {len(settings.pinecone_api_key) if settings.pinecone_api_key else 0}")
             # Don't raise to allow app to start even if Pinecone is not configured
     
     def load_products_from_csv(self, csv_path: str = "data/lust_products.csv") -> bool:
