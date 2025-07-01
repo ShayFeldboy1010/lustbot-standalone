@@ -90,6 +90,8 @@ RESPONSE FORMATTING GUIDELINES:
 - When presenting multiple options, separate them with double line breaks
 - Use single line breaks within the same topic or paragraph
 - Keep the welcome message compact, but all other responses should be well-spaced
+- If user asks for "ירידת שורה" or "רדת שורה" or wants line breaks, use extra spacing
+- When user requests formatting changes, apply them immediately to the response
 - Example of good spacing:
   "זה מוצר מעולה לגברים.
 
@@ -98,6 +100,13 @@ RESPONSE FORMATTING GUIDELINES:
   המחיר הוא 198 שקל.
 
   איך אתה רוצה להמשיך?"
+
+SPECIAL FORMATTING COMMANDS:
+- If user says "ירידת שורה", "תוסיף שורות", "רדת שורה", "יותר מרווחים" - use the `format_with_line_breaks` tool
+- If user wants more spacing, respond with double line breaks between every sentence
+- When user requests formatting changes, acknowledge and apply them using the formatting tool
+- Keywords to watch for: "ירידת שורה", "שורות", "מרווחים", "פורמט", "ריווח"
+- Always acknowledge formatting requests and apply them immediately
 
 ---
 
@@ -363,51 +372,21 @@ class LustBotTools(Toolkit):
             logger.error(f"Error saving callback request: {e}")
             return "אירעה שגיאה בשמירת הפרטים. אנא נסה שוב או צור קשר ישירות."
 
-
-def create_agent() -> Agent:
-    """Create and configure the LustBot agent"""
-    
-    model = OpenAIChat(
-        id=settings.agent_model,
-        api_key=settings.openai_api_key,
-        temperature=settings.agent_temperature
-    )
-    
-    tools = [LustBotTools()]
-    
-    return Agent(
-        model=model,
-        tools=tools,
-        instructions=SYSTEM_PROMPT,
-        markdown=True,
-        show_tool_calls=False,
-        telemetry=False,
-        monitoring=False,
-        add_history_to_messages=True,  # Enable conversation history
-        num_history_responses=10       # Keep last 10 exchanges in memory
-    )
-
-# Agent sessions (per user)
-agent_sessions = {}
-
-def get_agent(user_id: str = "default") -> Agent:
-    """Get or create agent for specific user session"""
-    global agent_sessions
-    
-    if user_id not in agent_sessions:
-        agent_sessions[user_id] = create_agent()
-        logger.info(f"Created new agent session for user: {user_id}")
-    
-    return agent_sessions[user_id]
-
-def reset_agent(user_id: str = None):
-    """Reset agent session(s)"""
-    global agent_sessions
-    
-    if user_id:
-        if user_id in agent_sessions:
-            del agent_sessions[user_id]
-            logger.info(f"Reset agent session for user: {user_id}")
-    else:
-        agent_sessions.clear()
-        logger.info("Reset all agent sessions")
+    def format_with_line_breaks(self, text: str = "", extra_spacing: bool = True) -> str:
+        """
+        Format text with proper line breaks and spacing for better readability.
+        Use this when user requests line breaks or better formatting.
+        
+        Args:
+            text: The text to format
+            extra_spacing: Whether to add extra spacing between sentences
+        """
+        if not text.strip():
+            return "בטח! אני אוסיף יותר ירידות שורה לתשובות שלי.\n\nככה זה נראה עם ריווח טוב יותר.\n\nמה עוד אני יכול לעזור לך?"
+        
+        if extra_spacing:
+            # Add double line breaks between sentences
+            formatted_text = text.replace('. ', '.\n\n').replace('! ', '!\n\n').replace('? ', '?\n\n')
+            return f"בטח! הנה התשובה עם ירידות שורה:\n\n{formatted_text}"
+        else:
+            return text
