@@ -390,3 +390,51 @@ class LustBotTools(Toolkit):
             return f"בטח! הנה התשובה עם ירידות שורה:\n\n{formatted_text}"
         else:
             return text
+
+
+def create_agent() -> Agent:
+    """Create and configure the LustBot agent"""
+    
+    model = OpenAIChat(
+        id=settings.agent_model,
+        api_key=settings.openai_api_key,
+        temperature=settings.agent_temperature
+    )
+    
+    tools = [LustBotTools()]
+    
+    return Agent(
+        model=model,
+        tools=tools,
+        instructions=SYSTEM_PROMPT,
+        markdown=True,
+        show_tool_calls=False,
+        telemetry=False,
+        monitoring=False,
+        add_history_to_messages=True,  # Enable conversation history
+        num_history_responses=10       # Keep last 10 exchanges in memory
+    )
+
+# Agent sessions (per user)
+agent_sessions = {}
+
+def get_agent(user_id: str = "default") -> Agent:
+    """Get or create agent session for user"""
+    if user_id not in agent_sessions:
+        agent_sessions[user_id] = create_agent()
+    return agent_sessions[user_id]
+
+def reset_agent(user_id: str = "default"):
+    """Reset agent session for user"""
+    if user_id in agent_sessions:
+        del agent_sessions[user_id]
+
+# Default instance
+_default_agent = None
+
+def get_default_agent() -> Agent:
+    """Get default agent instance"""
+    global _default_agent
+    if _default_agent is None:
+        _default_agent = create_agent()
+    return _default_agent
