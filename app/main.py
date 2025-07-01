@@ -5,6 +5,9 @@ from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
 import uvicorn
 import logging
+import asyncio
+from typing import Dict, Tuple
+import time
 from .settings import settings
 from .agent import get_agent
 from .vectorstore import vector_store
@@ -37,6 +40,65 @@ app.add_middleware(
 # Mount static files (frontend)
 app.mount("/static", StaticFiles(directory="frontend"), name="static")
 
+# Request queue management for handling multiple requests properly
+user_request_queues: Dict[str, asyncio.Queue] = {}
+user_processing_status: Dict[str, bool] = {}
+user_last_activity: Dict[str, float] = {}
+
+# Cleanup old user sessions (older than 30 minutes)
+CLEANUP_INTERVAL = 1800  # 30 minutes
+
+async def cleanup_old_sessions():
+    """Clean up old user sessions periodically"""
+    while True:
+        current_time = time.time()
+        users_to_remove = []
+        
+        for user_id, last_activity in user_last_activity.items():
+            if current_time - last_activity > CLEANUP_INTERVAL:
+                users_to_remove.append(user_id)
+        
+        for user_id in users_to_remove:
+            if user_id in user_request_queues:
+                del user_request_queues[user_id]
+            if user_id in user_processing_status:
+                del user_processing_status[user_id]
+            if user_id in user_last_activity:
+                del user_last_activity[user_id]
+            logger.info(f"Cleaned up session for user: {user_id}")
+        
+        await asyncio.sleep(300)  # Check every 5 minutes
+
+async def process_user_queue(user_id: str):
+    """Process requests for a specific user in FIFO order"""
+    while user_id in user_request_queues and not user_request_queues[user_id].empty():
+        try:
+            # Get the next request from the queue
+            message, future = await user_request_queues[user_id].get()
+            
+            # Update last activity
+            user_last_activity[user_id] = time.time()
+            
+            # Process the message with the agent
+            logger.info(f"Processing message for user {user_id}: {message[:50]}...")
+            agent = get_agent(user_id)
+            response = agent.run(message, stream=False)
+            
+            # Set the result for the waiting request
+            if not future.cancelled():
+                future.set_result(response)
+            
+            # Mark task as done
+            user_request_queues[user_id].task_done()
+            
+        except Exception as e:
+            logger.error(f"Error processing message for user {user_id}: {e}")
+            if not future.cancelled():
+                future.set_exception(e)
+    
+    # Mark user as not processing when queue is empty
+    user_processing_status[user_id] = False
+
 
 class ChatMessage(BaseModel):
     message: str
@@ -64,7 +126,7 @@ async def serve_frontend():
 @app.post("/lustbot", response_model=ChatResponse)
 async def lustbot_chat(request: ChatMessage):
     """
-    Main LustBot chat endpoint
+    Main LustBot chat endpoint with FIFO queue processing
     
     Args:
         request: Chat message from user
@@ -76,23 +138,49 @@ async def lustbot_chat(request: ChatMessage):
         if not request.message.strip():
             raise HTTPException(status_code=400, detail="Message cannot be empty")
         
-        logger.info(f"Received message from {request.user_id}: {request.message[:100]}...")
+        user_id = request.user_id
+        logger.info(f"Received message from {user_id}: {request.message[:100]}...")
         
-        # Get agent for this user session and process message
-        agent = get_agent(request.user_id)
-        response = agent.run(request.message)
+        # Initialize user queue if doesn't exist
+        if user_id not in user_request_queues:
+            user_request_queues[user_id] = asyncio.Queue()
+            user_processing_status[user_id] = False
+        
+        # Update last activity
+        user_last_activity[user_id] = time.time()
+        
+        # Create a future to wait for the result
+        result_future = asyncio.Future()
+        
+        # Add request to user's queue
+        await user_request_queues[user_id].put((request.message, result_future))
+        
+        # Start processing queue if not already processing
+        if not user_processing_status.get(user_id, False):
+            user_processing_status[user_id] = True
+            asyncio.create_task(process_user_queue(user_id))
+        
+        # Wait for result with timeout
+        try:
+            response = await asyncio.wait_for(result_future, timeout=60.0)  # 60 second timeout
+        except asyncio.TimeoutError:
+            logger.error(f"Request timeout for user {user_id}")
+            return ChatResponse(
+                reply="מצטער, הבקשה לקחה יותר מדי זמן. אנא נסה שוב.",
+                status="error"
+            )
         
         # Extract the content from the agno response
         reply = response.content if hasattr(response, 'content') else str(response)
         
-        logger.info(f"Generated reply: {reply[:100]}...")
+        logger.info(f"Generated reply for {user_id}: {reply[:100]}...")
         
         return ChatResponse(reply=reply, status="success")
         
     except Exception as e:
-        logger.error(f"Chat processing failed: {e}")
+        logger.error(f"Chat processing failed for {request.user_id}: {e}")
         return ChatResponse(
-            reply="I apologize, but I'm experiencing technical difficulties. Please try again later.",
+            reply="מצטער, אני נתקל בבעיה טכנית. אנא נסה שוב מאוחר יותר.",
             status="error"
         )
 
@@ -133,6 +221,32 @@ async def reset_agent_endpoint():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/admin/queue-status")
+async def queue_status():
+    """Admin endpoint to check queue status"""
+    try:
+        status = {}
+        for user_id in user_request_queues:
+            queue_size = user_request_queues[user_id].qsize()
+            is_processing = user_processing_status.get(user_id, False)
+            last_activity = user_last_activity.get(user_id, 0)
+            status[user_id] = {
+                "queue_size": queue_size,
+                "is_processing": is_processing,
+                "last_activity": last_activity,
+                "last_activity_minutes_ago": (time.time() - last_activity) / 60
+            }
+        
+        return {
+            "status": "success", 
+            "total_users": len(user_request_queues),
+            "user_queues": status
+        }
+    except Exception as e:
+        logger.error(f"Queue status check failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.on_event("startup")
 async def startup_event():
     """Application startup tasks"""
@@ -157,6 +271,10 @@ async def startup_event():
         logger.info("✅ LustBot agent initialized")
     except Exception as e:
         logger.error(f"❌ Failed to initialize agent: {e}")
+    
+    # Start session cleanup task
+    asyncio.create_task(cleanup_old_sessions())
+    logger.info("✅ Session cleanup task started")
     
     logger.info(f"🌐 LustBot is running on http://{settings.host}:{settings.port}")
     logger.info(f"📚 API Docs available at http://{settings.host}:{settings.port}/docs")
