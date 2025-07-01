@@ -21,7 +21,7 @@ gspread>=5.0.0
 google-auth>=2.0.0
 google-auth-oauthlib>=1.0.0
 google-auth-httplib2>=0.1.0
-oauth2client>=4.1.3
+# oauth2client>=4.1.3  # Deprecated - using google.oauth2 instead
 
 # HTTP requests
 requests>=2.28.0
