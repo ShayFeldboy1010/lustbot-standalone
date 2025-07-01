@@ -24,9 +24,11 @@ FIRST MESSAGE: When someone starts a conversation, always greet them with this e
 🔥 שלום! אני LustBot - העוזר החכם שלכם לקניית בשמי פרומונים. איך אני יכול לעזור לכם למצוא משהו מיוחד היום? ⭐
 
 FORMATTING RULES:
-- Keep responses concise and in flowing text without unnecessary line breaks
+- Use double line breaks between different topics or sections for better readability
+- Keep the welcome message as a single flowing sentence (no extra line breaks there)
+- For all other responses, add proper spacing between paragraphs and sections
 - Use emojis sparingly but effectively
-- Keep welcome messages as single flowing sentences
+- Format product information with clear spacing between items
 
 ---
 
@@ -82,6 +84,20 @@ Conversation Style & Tone
 - Persona: Adopt a warm, professional, and approachable tone. Act as if you are speaking with a customer face-to-face. Be a helpful consultant, not a robot.
 - Method: Ask guiding questions to help the customer discover the right perfume for themselves. Focus on feelings, benefits, and the user experience.
 - Call to Action (CTA): Always end your responses with a clear next step—a question, a suggestion, or a gentle instruction to guide the conversation forward.
+
+RESPONSE FORMATTING GUIDELINES:
+- Add proper spacing between different topics or ideas by using double line breaks
+- When presenting multiple options, separate them with double line breaks
+- Use single line breaks within the same topic or paragraph
+- Keep the welcome message compact, but all other responses should be well-spaced
+- Example of good spacing:
+  "זה מוצר מעולה לגברים.
+
+  הוא מכיל פרומונים טבעיים.
+
+  המחיר הוא 198 שקל.
+
+  איך אתה רוצה להמשיך?"
 
 ---
 
@@ -250,7 +266,7 @@ class LustBotTools(Toolkit):
         """
         Capture customer details when they want to purchase with Bit or Cash payment.
         Use this tool ONLY after asking customer about payment method and collecting all required information.
-        
+        Ask for the information in a structured and organized way.
         Args:
             name: Customer's full name (required)
             email: Customer's email address (required) 
@@ -272,7 +288,7 @@ class LustBotTools(Toolkit):
             if not shipping_type.strip(): missing_fields.append("סוג משלוח")
             
             if missing_fields:
-                return f"אני צריך עוד כמה פרטים כדי להשלים את ההזמנה:\n{', '.join(missing_fields)}\n\nאנא ספק את הפרטים החסרים."
+                return f"אני צריך עוד כמה פרטים כדי להשלים את ההזמנה:\n\n{', '.join(missing_fields)}\n\nאנא ספק את הפרטים החסרים."
             
             # Validate payment method
             if payment_method.lower() not in ["bit", "cash", "ביט", "מזומן"]:
@@ -292,7 +308,7 @@ class LustBotTools(Toolkit):
             
             logger.info(f"Lead captured successfully: {name} - {email} - {product}")
             
-            return f"תודה {name}! ההזמנה שלך נקלטה בהצלחה.\n\nפרטי ההזמנה:\n📱 {product}\n💳 {payment_method}\n📦 משלוח {shipping_type}\n\nנציג מכירות יצור איתך קשר בהקדם לאישור ההזמנה ופרטי המשלוח. אנחנו כאן בשבילך! 😊"
+            return f"תודה {name}! ההזמנה שלך נקלטה בהצלחה.\n\nפרטי ההזמנה:\n\n📱 {product}\n\n💳 {payment_method}\n\n📦 משלוח {shipping_type}\n\nנציג מכירות יצור איתך קשר בהקדם לאישור ההזמנה ופרטי המשלוח.\n\nאנחנו כאן בשבילך! 😊"
             
         except Exception as e:
             logger.error(f"Error capturing lead: {e}")
@@ -317,7 +333,7 @@ class LustBotTools(Toolkit):
             if not phone.strip(): missing_fields.append("מספר טלפון")
             
             if missing_fields:
-                return f"אני צריך עוד כמה פרטים כדי לשמור את הבקשה שלך:\n{', '.join(missing_fields)}\n\nאנא ספק את הפרטים החסרים."
+                return f"אני צריך עוד כמה פרטים כדי לשמור את הבקשה שלך:\n\n{', '.join(missing_fields)}\n\nאנא ספק את הפרטים החסרים."
             
             # Save to Google Sheets with minimal required fields
             try:
