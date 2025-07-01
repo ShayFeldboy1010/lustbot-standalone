@@ -35,10 +35,17 @@ class LustVectorStore:
     def _initialize_pinecone(self):
         """Initialize Pinecone connection"""
         try:
+            # Check if API key is available
+            if not settings.pinecone_api_key:
+                logger.error("Pinecone API key not found in environment variables")
+                return
+            
+            logger.info(f"Initializing Pinecone with index: {self.index_name}")
             self.pinecone_client = Pinecone(api_key=settings.pinecone_api_key)
             
             # Check if index exists, if not create it
             existing_indexes = [index.name for index in self.pinecone_client.list_indexes()]
+            logger.info(f"Existing Pinecone indexes: {existing_indexes}")
             
             if self.index_name not in existing_indexes:
                 logger.info(f"Creating new Pinecone index: {self.index_name}")
@@ -51,12 +58,14 @@ class LustVectorStore:
                         region="us-east-1"
                     )
                 )
+                logger.info(f"Successfully created Pinecone index: {self.index_name}")
             
             self.index = self.pinecone_client.Index(self.index_name)
             logger.info(f"Connected to Pinecone index: {self.index_name}")
             
         except Exception as e:
             logger.error(f"Failed to initialize Pinecone: {e}")
+            logger.error(f"Pinecone API key present: {bool(settings.pinecone_api_key)}")
             # Don't raise to allow app to start even if Pinecone is not configured
     
     def load_products_from_csv(self, csv_path: str = "data/lust_products.csv") -> bool:
