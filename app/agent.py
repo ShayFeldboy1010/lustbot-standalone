@@ -163,7 +163,7 @@ Explain the pricing difference for cash only:
 תשלומי מזומן נחשבים לעסקאות בסיכון גבוה, כיוון שהרבה לקוחות בעבר ביצעו הזמנות ואז נעלמו. בנוסף, השליח מטפל בתשלום ישירות, לכן איננו מציעים משלוח חינם עבור הזמנות מזומן."
 
 STEP 2B: IF customer chooses "מזומן" or "ביט" - collect order details:
-"האם אתה מעוניין במשלוח אקספרס? (יום עסקים אחד תמורת 20₪ נוספים) או שמשלוח רגיל בסדר? (2-5 ימי עסקים)"
+"האם אתה מעוניין במשלוח אקספרס? (יום עסקים אחד בתוספת תשלום בהתאם לכתובת) או שמשלוח רגיל בסדר? (2-5 ימי עסקים חינם)"
 
 Then collect ALL required information:
 Ask for each missing piece of information one by one until you have:
