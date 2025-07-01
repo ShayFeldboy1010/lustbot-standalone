@@ -141,8 +141,11 @@ async def startup_event():
     # Initialize vector store with products (optional)
     if settings.pinecone_api_key and settings.pinecone_api_key != "temp-placeholder":
         try:
-            vector_store.load_products_from_csv()
-            logger.info("✅ Product database loaded")
+            success = vector_store.load_products_from_csv()
+            if success:
+                logger.info("✅ Product database loaded successfully")
+            else:
+                logger.warning("⚠️ Product database failed to load - Pinecone not available")
         except Exception as e:
             logger.warning(f"⚠️ Failed to load products: {e}")
     else:
