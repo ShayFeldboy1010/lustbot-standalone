@@ -1,5 +1,5 @@
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2 import service_account
 from datetime import datetime
 import logging
 import os
@@ -61,7 +61,10 @@ class GoogleSheetsClient:
                     logger.info(f"Last 50 chars: {repr(cleaned_json[-50:])}")
                     
                     creds_dict = json.loads(cleaned_json)
-                    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+                    creds = service_account.Credentials.from_service_account_info(
+                        creds_dict, 
+                        scopes=scope
+                    )
                     logger.info("Successfully created credentials from JSON")
                 except json.JSONDecodeError as e:
                     logger.error(f"Failed to parse JSON credentials: {e}")
@@ -77,7 +80,10 @@ class GoogleSheetsClient:
                         cleaned_json = cleaned_json.strip()
                         
                         creds_dict = json.loads(cleaned_json)
-                        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+                        creds = service_account.Credentials.from_service_account_info(
+                            creds_dict, 
+                            scopes=scope
+                        )
                         logger.info("Successfully created credentials from cleaned JSON")
                     except Exception as retry_error:
                         logger.error(f"Failed to parse cleaned JSON: {retry_error}")
@@ -92,9 +98,9 @@ class GoogleSheetsClient:
                 if not os.path.exists(settings.google_sheets_credentials_path):
                     raise FileNotFoundError(f"Credentials file not found: {settings.google_sheets_credentials_path}")
                 
-                creds = ServiceAccountCredentials.from_json_keyfile_name(
+                creds = service_account.Credentials.from_service_account_file(
                     settings.google_sheets_credentials_path, 
-                    scope
+                    scopes=scope
                 )
             
             logger.info("Service account credentials loaded successfully")
