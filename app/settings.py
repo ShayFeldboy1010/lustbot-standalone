@@ -7,7 +7,7 @@ import os
 class Settings(BaseSettings):
     # Groq API (new LLM provider)
     groq_api_key: str = Field("your_groq_api_key_here", env="GROQ_API_KEY")
-    groq_model: str = "meta-llama/llama-4-scout-17b-16e-instruct"
+    groq_model: str = "llama-3.1-8b-instant"
     
     # OpenAI (legacy - keeping for compatibility)
     openai_api_key: Optional[str] = Field(None, env="OPENAI_API_KEY")
@@ -28,8 +28,8 @@ class Settings(BaseSettings):
     sheet_id: Optional[str] = Field(None, env="GOOGLE_SHEET_ID")  # Legacy support
     
     # Agent Settings
-    agent_model: str = "meta-llama/llama-4-scout-17b-16e-instruct"  # Using Groq model
-    agent_temperature: float = 0.7
+    agent_model: str = "llama-3.1-8b-instant"  # Using Groq model
+    agent_temperature: float = 0.3
     
     # App Settings
     debug: bool = Field(False, env="DEBUG")

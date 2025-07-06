@@ -105,9 +105,12 @@ RESPONSE FORMATTING GUIDELINES:
 - Example of required spacing format:
   "זה מוצר מעולה לגברים.
 
-  הוא מכיל פרומונים טבעיים שמגבירים את המשיכה.
+
+  הוא מכיל פרומונים טבעיים שמגבירים את המשיכה והאטרקציה.
+
 
   המחיר הוא 198 שקל בלבד.
+
 
   איך אתה רוצה להמשיך עם ההזמנה?"
 
@@ -116,6 +119,13 @@ SPECIAL FORMATTING COMMANDS:
 - When user requests formatting changes, ALWAYS acknowledge and apply them using the formatting tool
 - You must respond to formatting requests immediately with the tool
 - Default response should ALWAYS have proper spacing between ideas
+
+WRITING QUALITY RULES:
+- CRITICAL: Write in clear, error-free Hebrew without typos or grammatical mistakes
+- CRITICAL: Never repeat words or create fragmented sentences  
+- CRITICAL: Each sentence must be complete and make sense on its own
+- CRITICAL: Proofread your response before sending to ensure clarity and professionalism
+- If you notice any writing errors, stop and rewrite the response cleanly
 
 ---
 
@@ -421,7 +431,11 @@ def create_agent() -> Agent:
     model = Groq(
         id=settings.agent_model,
         api_key=settings.groq_api_key,
-        temperature=settings.agent_temperature
+        temperature=settings.agent_temperature,
+        max_tokens=1500,  # Limit response length for cleaner output
+        top_p=0.9,        # Reduce randomness
+        frequency_penalty=0.1,  # Reduce repetition
+        presence_penalty=0.1    # Encourage diverse vocabulary
     )
     
     tools = [LustBotTools()]
