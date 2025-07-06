@@ -5,8 +5,12 @@ import os
 
 
 class Settings(BaseSettings):
-    # OpenAI
-    openai_api_key: str = Field(..., env="OPENAI_API_KEY")
+    # Groq API (new LLM provider)
+    groq_api_key: str = Field("your_groq_api_key_here", env="GROQ_API_KEY")
+    groq_model: str = "meta-llama/llama-4-scout-17b-16e-instruct"
+    
+    # OpenAI (legacy - keeping for compatibility)
+    openai_api_key: Optional[str] = Field(None, env="OPENAI_API_KEY")
     openai_model: str = "gpt-4o-mini"
     
     # Pinecone
@@ -24,7 +28,7 @@ class Settings(BaseSettings):
     sheet_id: Optional[str] = Field(None, env="GOOGLE_SHEET_ID")  # Legacy support
     
     # Agent Settings
-    agent_model: str = "gpt-4o-mini"
+    agent_model: str = "meta-llama/llama-4-scout-17b-16e-instruct"  # Using Groq model
     agent_temperature: float = 0.7
     
     # App Settings
@@ -47,7 +51,8 @@ class Settings(BaseSettings):
 settings = Settings()
 
 # For backward compatibility
-OPENAI_API_KEY = settings.openai_api_key
+OPENAI_API_KEY = settings.openai_api_key if settings.openai_api_key else None
+GROQ_API_KEY = settings.groq_api_key
 PINECONE_API_KEY = settings.pinecone_api_key
 FIRECRAWL_API_KEY = settings.firecrawl_api_key
 AGENT_MODEL = settings.agent_model

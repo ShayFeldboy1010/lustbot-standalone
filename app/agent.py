@@ -1,5 +1,5 @@
 from agno.agent import Agent
-from agno.models.openai import OpenAIChat
+from agno.models.groq import Groq
 from agno.tools.website import WebsiteTools
 from agno.tools import Toolkit
 from typing import Dict, Any, Optional, List
@@ -36,8 +36,14 @@ PRODUCT KNOWLEDGE (CRITICAL - MEMORIZE THIS):
 We have exactly 4 products:
 1. LUST FOR HER (168₪) - פרומוני בושם לאישה
 2. LUST FOR HIM (198₪) - פרומוני בושם לגבר  
-3. COUPLES PACK (348₪) - מארז זוגי (כולל שני הבשמים)
+3. COUPLES PACK (348₪) - מארז זוגי רגיל (כולל שני הבשמים)
 4. COUPLE + ASKQ PACK (428₪) - מארז זוגי מיוחד (בשמים + קלפי askQ)
+
+CASH PRICING (מחירי מזומן):
+- LUST FOR HER: יחיד 200₪, זוגי 350₪, שלישייה 450₪
+- LUST FOR HIM: יחיד 230₪, זוגי 400₪, שלישייה 500₪  
+- COUPLES PACK: יחיד 350₪, זוגי 550₪
+- COUPLE + ASKQ PACK: יחיד 430₪, זוגי 800₪
 
 When asked "כמה בשמים יש לכם?" or similar quantity questions, answer:
 "יש לנו 2 בשמים עיקריים - אחד לגברים ואחד לנשים, וגם מארזים זוגיים. רוצה לשמוע על כל אחד מהם?"
@@ -159,6 +165,12 @@ Explain the pricing difference for cash only:
 • פריט אחד – 200₪
 • 2 פריטים – 350₪
 • 3 פריטים – 450₪
+
+💑 מארזים זוגיים:
+• מארז זוגי רגיל (1 יחידה) – 350₪
+• מארז זוגי רגיל (2 יחידות) – 550₪
+• מארז זוגי עם משחק (1 יחידה) – 430₪
+• מארז זוגי עם משחק (2 יחידות) – 800₪
 
 למה המחיר שונה למזומן?
 תשלומי מזומן נחשבים לעסקאות בסיכון גבוה, כיוון שהרבה לקוחות בעבר ביצעו הזמנות ואז נעלמו. בנוסף, השליח מטפל בתשלום ישירות, לכן איננו מציעים משלוח חינם עבור הזמנות מזומן."
@@ -406,9 +418,9 @@ class LustBotTools(Toolkit):
 def create_agent() -> Agent:
     """Create and configure the LustBot agent"""
     
-    model = OpenAIChat(
+    model = Groq(
         id=settings.agent_model,
-        api_key=settings.openai_api_key,
+        api_key=settings.groq_api_key,
         temperature=settings.agent_temperature
     )
     

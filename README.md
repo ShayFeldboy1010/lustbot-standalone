@@ -1,10 +1,10 @@
 # 🔥 LustBot - AI Sales Assistant for Lust Perfumes
 
-An intelligent sales assistant chatbot designed specifically for Lust pheromone perfumes. Built with FastAPI, Agno AI framework, and modern web technologies.
+An intelligent sales assistant chatbot designed specifically for Lust pheromone perfumes. Built with FastAPI, Agno AI framework, and Groq API for ultra-fast LLM responses.
 
 ## ✨ Features
 
-- **AI-Powered Sales Assistant**: Natural Hebrew conversation with product expertise
+- **AI-Powered Sales Assistant**: Natural Hebrew conversation with product expertise powered by Groq's lightning-fast LLMs
 - **Vector Search**: Semantic search through product database using Pinecone
 - **Lead Capture**: Automatic lead collection and Google Sheets integration
 - **Web Scraping**: Dynamic content fetching with Agno WebsiteTools
@@ -28,10 +28,14 @@ make install
 ### 3. Configure Environment Variables
 ```bash
 # Required API keys in .env
-OPENAI_API_KEY=your_openai_key
+GROQ_API_KEY=gsk_your_groq_key
+GROQ_MODEL=meta-llama/llama-4-scout-17b-16e-instruct
 PINECONE_API_KEY=your_pinecone_key
 FIRECRAWL_KEY=your_firecrawl_key
 GOOGLE_SHEET_ID=your_sheet_id
+
+# Optional (for backward compatibility)
+OPENAI_API_KEY=your_openai_key
 ```
 
 ### 4. Add Product Data
@@ -98,16 +102,22 @@ make clean
 
 ### Environment Variables (.env)
 ```bash
-# AI Services
-OPENAI_API_KEY=sk-...
+# AI Services (Primary LLM)
+GROQ_API_KEY=gsk_...
+GROQ_MODEL=meta-llama/llama-4-scout-17b-16e-instruct
+
+# Vector Database
 PINECONE_API_KEY=...
 PINECONE_ENV=us-east1-gcp
 
-# External APIs
+# External APIs  
 FIRECRAWL_KEY=...
 
 # Google Services
 GOOGLE_SHEET_ID=...
+
+# Legacy/Optional
+OPENAI_API_KEY=sk-...
 ```
 
 ### Google Sheets Setup
@@ -125,11 +135,12 @@ id,name,description,price,category,url,features,brand,in_stock
 
 ## 🤖 Agent Capabilities
 
-The LustBot agent can:
+The LustBot agent powered by Groq's fast LLMs can:
 - **Search Products**: Find products using semantic similarity
-- **Capture Leads**: Collect customer information for follow-up
+- **Capture Leads**: Collect customer information for follow-up  
 - **Scrape Web**: Get additional product information
 - **Send Notifications**: Email alerts for new leads
+- **Fast Responses**: Ultra-fast conversation thanks to Groq's inference speed
 
 ## 🔌 API Endpoints
 
