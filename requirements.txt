@@ -8,6 +8,7 @@ gunicorn==21.2.0
 openai>=1.0.0
 groq>=0.4.0
 pinecone>=4.0.0
+sentence-transformers>=2.2.0
 
 # Data processing
 pandas>=2.0.0

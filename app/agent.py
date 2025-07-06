@@ -57,10 +57,12 @@ Core Operating Procedure: Information Retrieval Hierarchy
 
 You must follow this sequence strictly to answer user questions:
 
-1. Primary Source (Vector Store): Your first and main source of truth is the Pinecone vector store. For ANY question about products, policies, or company information, you MUST start by using the `vector_search` tool.
-2. Human Knowledge: If the vector store doesn't provide sufficient information, use your knowledge about the 4 products described in this prompt.
-3. Secondary Source (Live Website): Only as a last resort, and only for the official website https://mylustshop.com, use the `website_scrape` tool.
-4. Human Handoff (Final Resort): If all tools fail, DO NOT INVENT AN ANSWER. Use the handoff script.
+1. Primary Source (Product Knowledge): Use the detailed product information in this SYSTEM_PROMPT as your main source
+2. Secondary Source (Vector Store): If available, use the `vector_search` tool for additional product details  
+3. Website Source (Live Website): Only as a last resort, and only for the official website https://mylustshop.com, use the `website_scrape` tool
+4. Human Handoff (Final Resort): If all sources fail, DO NOT INVENT AN ANSWER. Use the handoff script
+
+IMPORTANT: Since vector search may not always be available, rely primarily on the product knowledge in this prompt.
 
 ---
 
@@ -71,13 +73,13 @@ Your goal is to be a sales consultant, not a search engine. You must synthesize 
 The Summary-First Answering Method (CRITICAL RULE)
 This is your primary method for answering questions about products:
 
-Step 1: Use Vector Search First. Always start by using the `vector_search` tool for any product questions.
+Step 1: Use Product Knowledge First. Start with the detailed product information in this SYSTEM_PROMPT.
 
 Step 2: The Initial Summary. Provide a brief, one-to-two sentence summary that directly answers the user's question.
 
 Step 3: Ask to Elaborate. Immediately after the summary, ask if they want more information: "רוצה שאפרט עוד?" or "תרצה לשמוע עוד על זה?"
 
-Step 4: Use Website Scrape if Needed. If vector search doesn't provide complete information, use `website_scrape` tool for live website data.
+Step 4: Use Vector Search if Available. If the user wants more details and vector search is available, you can use the `vector_search` tool.
 
 Step 5: The Elaboration. Only if the user confirms they want more details, provide longer descriptions with human-centric language about benefits and feelings.
 
@@ -274,20 +276,21 @@ class LustBotTools(Toolkit):
         Input should be the customer's question or product description.
         """
         try:
-            # Check if vector store is available
-            if not vector_store.vectorstore:
-                return "I'm currently updating my product database. Let me help you with general information about our luxury products instead."
+            # Check if vector store and embedder are available
+            if not vector_store.vectorstore or not vector_store.embedder:
+                logger.warning("⚠️ Vector store not available - using fallback response")
+                return "מצטער, בסיס הנתונים שלי נמצא בעדכון כרגע. אני יכול לעזור לך עם מידע כללי על המוצרים שלנו: יש לנו 2 בשמים עיקריים - LUST FOR HER (168₪) ו-LUST FOR HIM (198₪), ומארזים זוגיים. על איזה מוצר תרצה לשמוע?"
             
             results = vector_store.search_products(query, k=5)
             
             if not results:
-                return "No products found matching your search. Please try different keywords or let me know what specific type of product you're looking for."
+                return "לא מצאתי מוצרים שמתאימים לחיפוש שלך. אנא נסה מילות חיפוש אחרות או תגיד לי איזה סוג מוצר אתה מחפש."
             
             # Format results
-            response = "Here are the products I found:\n\n"
+            response = "הנה המוצרים שמצאתי:\n\n"
             for i, doc in enumerate(results, 1):
                 metadata = doc.metadata
-                response += f"{i}. **{metadata.get('name', 'Unknown Product')}**\n"
+                response += f"{i}. **{metadata.get('name', 'מוצר לא ידוע')}**\n"
                 response += f"   Price: {metadata.get('price', 'N/A')}\n"
                 response += f"   Category: {metadata.get('category', 'N/A')}\n"
                 
